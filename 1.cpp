@@ -11,9 +11,30 @@ class AVLTree {
         Node(int value) {
             this->value = value;
         }
+
+        Node(const Node& other): left(other.left), right(other.right), value(other.value), height(other.height) {}
+
+        Node& operator=(const Node& other) {
+            if (this != &other) {
+                left = other.left;
+                right = other.right;
+                value = other.value;
+                height = other.height;
+            }
+            return *this;
+        }
     };
 
     Node* root = nullptr;
+
+    AVLTree(const AVLTree &other): root(other.root) {}
+
+    AVLTree& operator=(const AVLTree& other) {
+        if (this != &other) {
+            root = other.root;
+        }
+        return *this;
+    }
 
     Node* _insert(Node* node, int value) {
         if (!node) return new Node{value};
