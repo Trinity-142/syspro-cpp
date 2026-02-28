@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cassert>
+#include <vector>
 using namespace std;
 
 class AVLTree {
@@ -8,8 +10,11 @@ class AVLTree {
         int value;
         int height = 1;
 
-        Node(int value) {
-            this->value = value;
+        Node(int value): value(value) {}
+
+        Node(const Node& other): value(other.value), height(other.height) {
+            if (other.left) left = new Node{*other.left};
+            if (other.right) right = new Node{*other.right};
         }
     };
 
@@ -51,7 +56,6 @@ class AVLTree {
                 int min = _min(node->right);
                 node->value = min;
                 node->right = _remove(node->right, min);
-                return node;
             }
         }
         return balance(node);
@@ -116,14 +120,39 @@ class AVLTree {
         return node->height;
     }
 
-    void _inorder(Node* node) {
+    void _inorder(Node* node, vector<int>& result) {
         if (!node) return;
-        _inorder(node->left);
-        cout << node->value << " ";
-        _inorder(node->right);
+        _inorder(node->left, result);
+        result.push_back(node->value);
+        _inorder(node->right, result);
+    }
+
+    void _delete(Node* node) {
+        if (!node) return;
+        _delete(node->left);
+        _delete(node->right);
+        delete node;
     }
 
 public:
+    AVLTree() = default;
+
+    AVLTree(const AVLTree &other) {
+        if (other.root) root = new Node(*other.root);
+    }
+
+    ~AVLTree() {
+        clear();
+    }
+
+    AVLTree& operator=(const AVLTree& other) {
+        if (this != &other) {
+            clear();
+            if (other.root) root = new Node(*other.root);
+        }
+        return *this;
+    }
+
     void insert(int value) {
         root = _insert(root, value);
     }
@@ -144,33 +173,44 @@ public:
         return _min(root);
     }
 
-    void inorder() {
-        _inorder(root);
-        cout << endl;
+    void inorder(vector<int>& result) {
+        _inorder(root, result);
+    }
+
+    void clear() {
+        _delete(root);
+        root = nullptr;
     }
 };
 
 int main() {
-    AVLTree avl{};
-    avl.insert(9);
-    avl.insert(4);
-    avl.insert(10);
-    avl.insert(2);
-    avl.insert(6);
-    avl.insert(17);
-    avl.insert(5);
-    avl.insert(7);
-    avl.inorder();
-    cout << avl.find(5)->height << endl;
-    avl.remove(4);
-    avl.inorder();
-    cout << avl.find(5)->height << endl;
-    cout << avl.find(6)->height << endl;
-    avl.insert(8);
-    cout << avl.find(6)->height << endl;
-    avl.inorder();
-    cout << avl.max() << endl;
-    avl.remove(17);
-    cout << avl.max() << endl;
-    cout << avl.min() << endl;
+    AVLTree avl1{};
+    avl1.insert(10); avl1.insert(5); avl1.insert(15); avl1.insert(3);
+    vector<int> expected1;
+    avl1.inorder(expected1);
+
+    // Copy constructor
+    AVLTree avl2(avl1);
+    vector<int> expected2;
+    avl2.inorder(expected2);
+    assert(expected1 == expected2);
+    avl1.insert(99);
+    assert(avl1.find(99) != nullptr);
+    assert(avl2.find(99) == nullptr);
+
+    // Copy assignment operator
+    AVLTree avl3;
+    avl3.insert(100); avl3.insert(200);
+    avl3 = avl2;
+    vector<int> expected3;
+    avl3.inorder(expected3);
+    assert(expected2 == expected3);
+    assert(avl3.find(100) == nullptr);
+
+    avl2.remove(5);
+    assert(avl2.find(5) == nullptr);
+    assert(avl3.find(5) != nullptr);
+
+    avl3 = avl3;
+    assert(avl3.find(15) != nullptr);
 }
