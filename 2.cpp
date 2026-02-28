@@ -1,71 +1,81 @@
+#include <cassert>
 #include <iostream>
 #include <optional>
 
+const double eps = 1e-5;
+
 struct Point {
-    float x, y;
-    Point(float x, float y): x(x), y(y) {}
+    double x, y;
+    Point(double x, double y): x(x), y(y) {}
+
+public:
+    friend bool operator==(const Point& p1, const Point& p2) {
+        return std::abs(p1.x - p2.x) < eps && std::abs(p1.y - p2.y) < eps;
+    }
 };
 
 class Line {
-    float a, b, c;
-
-public:
-    Line(float a, float b, float c) : a(a), b(b), c(c) {}
+    double a, b, c;
     Line(const Point& p1, const Point& p2) :
         a(p1.y - p2.y),
         b(p2.x - p1.x),
         c(p1.x * p2.y - p1.y * p2.x)
     {}
+public:
+    Line(double a, double b, double c) : a(a), b(b), c(c) {}
+
+    static std::optional<Line> fabric(const Point& p1, const Point& p2) {
+        if (p1 == p2) return {};
+        return Line{p1, p2};
+    }
 
     std::optional<Point> intersection(const Line& other) const {
-        float det = a * other.b - b * other.a;
-        if (det == 0) return std::nullopt;
+        double det = a * other.b - b * other.a;
+        if (std::abs(det) < eps) return std::nullopt;
 
-        float x = (b * other.c - other.b * c) / det;
-        float y = (c * other.a - other.c * a) / det;
+        double x = (b * other.c - other.b * c) / det;
+        double y = (c * other.a - other.c * a) / det;
 
         return Point{x, y};
     }
 
     Line perpendicular(const Point& point) const {
-        float a = -this->b;
-        float b = this->a;
-        float c = -(b * point.x + a * point.y);
+        double a = -this->b;
+        double b = this->a;
+        double c = -(b * point.x + a * point.y);
         return {a, b, c};
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Line& line) {
-        if (line.b == 0) {
+        if (std::abs(line.b) < eps) {
             os << "x = " << -line.c / line.a << "\n";
             return os;
         }
-        float k = -line.a / line.b + 0.0f;
-        float b = -line.c / line.b;
-        std::string kx = (k != 0) ? (std::to_string(k) + "x") : ("");
-        os << "y = " << k << "x " << (b < 0 ? "- " : "+ ") << std::abs(b) << "\n";
+        double k = -line.a / line.b + 0.0f;
+        double b = -line.c / line.b;
+        os << "y = " << k << "x " << (std::abs(b) < eps ? "- " : "+ ") << std::abs(b) << "\n";
         return os;
     }
 };
 
 
 int main() {
-    Line vertical({2, 0}, {2, 10});
+    Point p1{42, 17}; Point p2{42, 17};
+    auto invalid_line = Line::fabric(p1, p2);
+    assert(!invalid_line.has_value());
+
+    auto opt_vertical = Line::fabric({2, 0}, {2, 10});
+    assert(opt_vertical.has_value());
+    Line vertical = opt_vertical.value();
     Line horizontal(0, 1, -5);
-    std::cout << vertical << horizontal;
     auto inter = vertical.intersection(horizontal);
+    assert(inter.has_value());
+    assert(inter.value() == Point(2, 5));
 
-    if (inter) {
-        std::cout << "Intersection: (" << inter->x << ", " << inter->y << ")\n";
-    }
-
-    Line line({5, 0}, {3.34, -2.34});
-    std::cout << line;
+    auto opt_line = Line::fabric({5, 0}, {3.34, -2.34});
+    assert(opt_line.has_value());
+    Line line = opt_line.value();
     Line perp = line.perpendicular({1, 1});
-    std::cout << perp;
     auto inter_perp = line.intersection(perp);
-    if (inter_perp) {
-        std::cout << "Perpendicular intersection: (" << inter_perp->x << ", " << inter_perp->y << ")\n";
-    }
-
-    return 0;
+    assert(inter_perp.has_value());
 }
