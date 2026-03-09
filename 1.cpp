@@ -1,38 +1,45 @@
 #include <iostream>
+#include <cassert>
+#include <vector>
 using namespace std;
 
 class AVLTree {
-    struct Node {
+    class Node {
         Node* left = nullptr;
         Node* right = nullptr;
-        int value;
-        int height = 1;
+        int _value;
+        int _height = 1;
 
         Node(int value) {
-            this->value = value;
+            _value = value;
         }
+        friend AVLTree;
+
+    public:
+        int height() const { return _height; }
+        int value() const { return _value; }
     };
 
     Node* root = nullptr;
 
     Node* _insert(Node* node, int value) {
         if (!node) return new Node{value};
-        if (value > node->value) node->right = _insert(node->right, value);
+        if (value > node->_value) node->right = _insert(node->right, value);
         else node->left = _insert(node->left, value);
         return balance(node);
     }
 
     Node* _find(Node* node, int value) {
         if (!node) return nullptr;
-        if (node->value == value) return node;
-        if (value > node->value) return _find(node->right, value);
+        if (node->_value == value) return node;
+        if (value > node->_value) return _find(node->right, value);
         return _find(node->left, value);
     }
 
     Node* _remove(Node* node, int value) {
         if (!node) return nullptr;
-        if (value < node->value) node->left = _remove(node->left, value);
-        else if (value > node->value) node->right = _remove(node->right, value);
+        if (value < node->_value) node->left = _remove(node->left, value);
+        else if (value > node->_value) node->right = _remove(node->right, value);
         else {
             if (!node->left and !node->right) {
                 delete node;
@@ -49,21 +56,20 @@ class AVLTree {
             }
             else {
                 int min = _min(node->right);
-                node->value = min;
+                node->_value = min;
                 node->right = _remove(node->right, min);
-                return node;
             }
         }
         return balance(node);
     }
 
     int _min(Node* node) {
-        if (!node->left) return node->value;
+        if (!node->left) return node->_value;
         return _min(node->left);
     }
 
     int _max(Node* node) {
-        if (!node->right) return node->value;
+        if (!node->right) return node->_value;
         return _max(node->right);
     }
 
@@ -116,14 +122,25 @@ class AVLTree {
         return node->height;
     }
 
-    void _inorder(Node* node) {
+    void _inorder(Node* node, vector<int>& result) {
         if (!node) return;
-        _inorder(node->left);
-        cout << node->value << " ";
-        _inorder(node->right);
+        _inorder(node->left, result);
+        result.push_back(node->_value);
+        _inorder(node->right, result);
+    }
+
+    void _delete(Node* node) {
+        if (!node) return;
+        _delete(node->left);
+        _delete(node->right);
+        delete node;
     }
 
 public:
+    ~AVLTree() {
+        _delete(root);
+    }
+
     void insert(int value) {
         root = _insert(root, value);
     }
@@ -144,33 +161,50 @@ public:
         return _min(root);
     }
 
-    void inorder() {
-        _inorder(root);
-        cout << endl;
+    void inorder(vector<int>& result) {
+        _inorder(root, result);
+    }
+
+    void clear() {
+        _delete(root);
+        root = nullptr;
     }
 };
 
 int main() {
     AVLTree avl{};
-    avl.insert(9);
-    avl.insert(4);
-    avl.insert(10);
-    avl.insert(2);
-    avl.insert(6);
-    avl.insert(17);
-    avl.insert(5);
-    avl.insert(7);
-    avl.inorder();
-    cout << avl.find(5)->height << endl;
+    avl.insert(9); avl.insert(4); avl.insert(10);
+    assert(avl.min() == 4);
+    assert(avl.max() == 10);
+    assert(avl.find(9) != nullptr);
+    assert(avl.find(4)->height == 1);
+    assert(avl.find(42) == nullptr);
     avl.remove(4);
-    avl.inorder();
-    cout << avl.find(5)->height << endl;
-    cout << avl.find(6)->height << endl;
-    avl.insert(8);
-    cout << avl.find(6)->height << endl;
-    avl.inorder();
-    cout << avl.max() << endl;
-    avl.remove(17);
-    cout << avl.max() << endl;
-    cout << avl.min() << endl;
+    assert(avl.find(4) == nullptr);
+    assert(avl.min() == 9);
+
+    avl.insert(1); avl.insert(15);
+    vector<int> actual;
+    vector<int> expected = {1, 9, 10, 15};
+    avl.inorder(actual);
+    assert(expected == actual);
+
+
+    // Rotations
+    // LL
+    avl.clear();
+    avl.insert(3); avl.insert(2); avl.insert(1);
+    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
+    // RR
+    avl.clear();
+    avl.insert(1); avl.insert(2); avl.insert(3);
+    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
+    // LR
+    avl.clear();
+    avl.insert(3); avl.insert(1); avl.insert(2);
+    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
+    // RL
+    avl.clear();
+    avl.insert(1); avl.insert(3); avl.insert(2);
+    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
 }
