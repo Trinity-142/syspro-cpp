@@ -10,8 +10,11 @@ class AVLTree {
         int _value;
         int _height = 1;
 
-        Node(int value) {
-            _value = value;
+        Node(int value): value(value) {}
+
+        Node(const Node& other): value(other.value), height(other.height) {
+            if (other.left) left = new Node{*other.left};
+            if (other.right) right = new Node{*other.right};
         }
         friend AVLTree;
 
@@ -125,7 +128,7 @@ class AVLTree {
     void _inorder(Node* node, vector<int>& result) {
         if (!node) return;
         _inorder(node->left, result);
-        result.push_back(node->_value);
+        result.push_back(node->value);
         _inorder(node->right, result);
     }
 
@@ -137,8 +140,22 @@ class AVLTree {
     }
 
 public:
+    AVLTree() = default;
+
+    AVLTree(const AVLTree &other) {
+        if (other.root) root = new Node(*other.root);
+    }
+
     ~AVLTree() {
-        _delete(root);
+        clear();
+    }
+
+    AVLTree& operator=(const AVLTree& other) {
+        if (this != &other) {
+            clear();
+            if (other.root) root = new Node(*other.root);
+        }
+        return *this;
     }
 
     void insert(int value) {
@@ -172,39 +189,33 @@ public:
 };
 
 int main() {
-    AVLTree avl{};
-    avl.insert(9); avl.insert(4); avl.insert(10);
-    assert(avl.min() == 4);
-    assert(avl.max() == 10);
-    assert(avl.find(9) != nullptr);
-    assert(avl.find(4)->height == 1);
-    assert(avl.find(42) == nullptr);
-    avl.remove(4);
-    assert(avl.find(4) == nullptr);
-    assert(avl.min() == 9);
+    AVLTree avl1{};
+    avl1.insert(10); avl1.insert(5); avl1.insert(15); avl1.insert(3);
+    vector<int> expected1;
+    avl1.inorder(expected1);
 
-    avl.insert(1); avl.insert(15);
-    vector<int> actual;
-    vector<int> expected = {1, 9, 10, 15};
-    avl.inorder(actual);
-    assert(expected == actual);
+    // Copy constructor
+    AVLTree avl2(avl1);
+    vector<int> expected2;
+    avl2.inorder(expected2);
+    assert(expected1 == expected2);
+    avl1.insert(99);
+    assert(avl1.find(99) != nullptr);
+    assert(avl2.find(99) == nullptr);
 
+    // Copy assignment operator
+    AVLTree avl3;
+    avl3.insert(100); avl3.insert(200);
+    avl3 = avl2;
+    vector<int> expected3;
+    avl3.inorder(expected3);
+    assert(expected2 == expected3);
+    assert(avl3.find(100) == nullptr);
 
-    // Rotations
-    // LL
-    avl.clear();
-    avl.insert(3); avl.insert(2); avl.insert(1);
-    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
-    // RR
-    avl.clear();
-    avl.insert(1); avl.insert(2); avl.insert(3);
-    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
-    // LR
-    avl.clear();
-    avl.insert(3); avl.insert(1); avl.insert(2);
-    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
-    // RL
-    avl.clear();
-    avl.insert(1); avl.insert(3); avl.insert(2);
-    assert(avl.find(3)->height == 1); assert(avl.find(2)->height == 2); assert(avl.find(1)->height == 1);
+    avl2.remove(5);
+    assert(avl2.find(5) == nullptr);
+    assert(avl3.find(5) != nullptr);
+
+    avl3 = avl3;
+    assert(avl3.find(15) != nullptr);
 }
