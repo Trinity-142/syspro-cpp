@@ -4,11 +4,11 @@
 using namespace std;
 
 class AVLTree {
-    struct Node {
+    class Node {
         Node* left = nullptr;
         Node* right = nullptr;
-        int value;
-        int height = 1;
+        int _value;
+        int _height = 1;
 
         Node(int value): value(value) {}
 
@@ -16,28 +16,33 @@ class AVLTree {
             if (other.left) left = new Node{*other.left};
             if (other.right) right = new Node{*other.right};
         }
+        friend AVLTree;
+
+    public:
+        int height() const { return _height; }
+        int value() const { return _value; }
     };
 
     Node* root = nullptr;
 
     Node* _insert(Node* node, int value) {
         if (!node) return new Node{value};
-        if (value > node->value) node->right = _insert(node->right, value);
+        if (value > node->_value) node->right = _insert(node->right, value);
         else node->left = _insert(node->left, value);
         return balance(node);
     }
 
     Node* _find(Node* node, int value) {
         if (!node) return nullptr;
-        if (node->value == value) return node;
-        if (value > node->value) return _find(node->right, value);
+        if (node->_value == value) return node;
+        if (value > node->_value) return _find(node->right, value);
         return _find(node->left, value);
     }
 
     Node* _remove(Node* node, int value) {
         if (!node) return nullptr;
-        if (value < node->value) node->left = _remove(node->left, value);
-        else if (value > node->value) node->right = _remove(node->right, value);
+        if (value < node->_value) node->left = _remove(node->left, value);
+        else if (value > node->_value) node->right = _remove(node->right, value);
         else {
             if (!node->left and !node->right) {
                 delete node;
@@ -54,7 +59,7 @@ class AVLTree {
             }
             else {
                 int min = _min(node->right);
-                node->value = min;
+                node->_value = min;
                 node->right = _remove(node->right, min);
             }
         }
@@ -62,12 +67,12 @@ class AVLTree {
     }
 
     int _min(Node* node) {
-        if (!node->left) return node->value;
+        if (!node->left) return node->_value;
         return _min(node->left);
     }
 
     int _max(Node* node) {
-        if (!node->right) return node->value;
+        if (!node->right) return node->_value;
         return _max(node->right);
     }
 
