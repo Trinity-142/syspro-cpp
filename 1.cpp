@@ -150,11 +150,12 @@ public:
         clear();
     }
 
-    AVLTree& operator=(const AVLTree& other) {
-        if (this != &other) {
-            clear();
-            if (other.root) root = new Node(*other.root);
-        }
+    AVLTree(AVLTree&& other) {
+        swap(root, other.root);
+    }
+
+    AVLTree& operator=(AVLTree other) {
+        swap(root, other.root);
         return *this;
     }
 
@@ -189,33 +190,37 @@ public:
 };
 
 int main() {
-    AVLTree avl1{};
-    avl1.insert(10); avl1.insert(5); avl1.insert(15); avl1.insert(3);
-    vector<int> expected1;
-    avl1.inorder(expected1);
+    // Move constructor
+    AVLTree from1{};
+    from1.insert(10); from1.insert(20); from1.insert(30);
+    vector<int> expected;
+    from1.inorder(expected);
+    AVLTree to1{std::move(from1)};
+    vector<int> actual;
+    to1.inorder(actual);
+    assert(actual == expected);
 
-    // Copy constructor
-    AVLTree avl2(avl1);
-    vector<int> expected2;
-    avl2.inorder(expected2);
-    assert(expected1 == expected2);
-    avl1.insert(99);
-    assert(avl1.find(99) != nullptr);
-    assert(avl2.find(99) == nullptr);
+    vector<int> after_move;
+    from1.inorder(after_move);
+    assert(after_move.empty()); assert(from1.find(10) == nullptr);
 
-    // Copy assignment operator
-    AVLTree avl3;
-    avl3.insert(100); avl3.insert(200);
-    avl3 = avl2;
-    vector<int> expected3;
-    avl3.inorder(expected3);
-    assert(expected2 == expected3);
-    assert(avl3.find(100) == nullptr);
+    // Move assignment operator
+    AVLTree from2{};
+    from2.insert(100); from2.insert(200);
+    AVLTree to2{};
+    to2.insert(142);
+    expected.clear();
+    from2.inorder(expected);
+    to2 = std::move(from2);
+    actual.clear();
+    to2.inorder(actual);
+    assert(actual == expected); assert(to2.find(142) == nullptr);
 
-    avl2.remove(5);
-    assert(avl2.find(5) == nullptr);
-    assert(avl3.find(5) != nullptr);
+    after_move.clear();
+    from2.inorder(after_move);
+    assert(after_move.empty()); assert(from2.find(100) == nullptr);
 
-    avl3 = avl3;
-    assert(avl3.find(15) != nullptr);
+    // Move self
+    to2 = std::move(to2);
+    assert(to2.find(100) != nullptr);
 }
