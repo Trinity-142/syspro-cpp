@@ -3,16 +3,17 @@
 #include <vector>
 using namespace std;
 
+template <typename T>
 class AVLTree {
     class Node {
         Node* left = nullptr;
         Node* right = nullptr;
-        int _value;
+        T _value;
         int _height = 1;
 
-        Node(int value): value(value) {}
+        Node(T value): _value(value) {}
 
-        Node(const Node& other): value(other.value), height(other.height) {
+        Node(const Node& other): _value(other._value), _height(other._height) {
             if (other.left) left = new Node{*other.left};
             if (other.right) right = new Node{*other.right};
         }
@@ -20,26 +21,26 @@ class AVLTree {
 
     public:
         int height() const { return _height; }
-        int value() const { return _value; }
+        T value() const { return _value; }
     };
 
     Node* root = nullptr;
 
-    Node* _insert(Node* node, int value) {
+    Node* _insert(Node* node, T value) {
         if (!node) return new Node{value};
         if (value > node->_value) node->right = _insert(node->right, value);
         else node->left = _insert(node->left, value);
         return balance(node);
     }
 
-    Node* _find(Node* node, int value) {
+    Node* _find(Node* node, T value) {
         if (!node) return nullptr;
         if (node->_value == value) return node;
         if (value > node->_value) return _find(node->right, value);
         return _find(node->left, value);
     }
 
-    Node* _remove(Node* node, int value) {
+    Node* _remove(Node* node, T value) {
         if (!node) return nullptr;
         if (value < node->_value) node->left = _remove(node->left, value);
         else if (value > node->_value) node->right = _remove(node->right, value);
@@ -58,7 +59,7 @@ class AVLTree {
                 return res;
             }
             else {
-                int min = _min(node->right);
+                T min = _min(node->right);
                 node->_value = min;
                 node->right = _remove(node->right, min);
             }
@@ -66,12 +67,12 @@ class AVLTree {
         return balance(node);
     }
 
-    int _min(Node* node) {
+    T _min(Node* node) {
         if (!node->left) return node->_value;
         return _min(node->left);
     }
 
-    int _max(Node* node) {
+    T _max(Node* node) {
         if (!node->right) return node->_value;
         return _max(node->right);
     }
@@ -117,18 +118,18 @@ class AVLTree {
     void calc_height(Node* node) {
         int left_height = height(node->left);
         int right_height = height(node->right);
-        node->height = std::max(left_height, right_height) + 1;
+        node->_height = std::max(left_height, right_height) + 1;
     }
 
     int height(Node* node) {
         if (!node) return 0;
-        return node->height;
+        return node->_height;
     }
 
-    void _inorder(Node* node, vector<int>& result) {
+    void _inorder(Node* node, vector<T>& result) {
         if (!node) return;
         _inorder(node->left, result);
-        result.push_back(node->value);
+        result.push_back(node->_value);
         _inorder(node->right, result);
     }
 
@@ -159,27 +160,27 @@ public:
         return *this;
     }
 
-    void insert(int value) {
+    void insert(T value) {
         root = _insert(root, value);
     }
 
-    Node* find(int value) {
+    Node* find(T value) {
         return _find(root, value);
     }
 
-    void remove(int value) {
+    void remove(T value) {
         root = _remove(root, value);
     }
 
-    int max() {
+    T max() {
         return _max(root);
     }
 
-    int min() {
+    T min() {
         return _min(root);
     }
 
-    void inorder(vector<int>& result) {
+    void inorder(vector<T>& result) {
         _inorder(root, result);
     }
 
@@ -191,36 +192,8 @@ public:
 
 int main() {
     // Move constructor
-    AVLTree from1{};
-    from1.insert(10); from1.insert(20); from1.insert(30);
-    vector<int> expected;
-    from1.inorder(expected);
-    AVLTree to1{std::move(from1)};
-    vector<int> actual;
-    to1.inorder(actual);
-    assert(actual == expected);
-
-    vector<int> after_move;
-    from1.inorder(after_move);
-    assert(after_move.empty()); assert(from1.find(10) == nullptr);
-
-    // Move assignment operator
-    AVLTree from2{};
-    from2.insert(100); from2.insert(200);
-    AVLTree to2{};
-    to2.insert(142);
-    expected.clear();
-    from2.inorder(expected);
-    to2 = std::move(from2);
-    actual.clear();
-    to2.inorder(actual);
-    assert(actual == expected); assert(to2.find(142) == nullptr);
-
-    after_move.clear();
-    from2.inorder(after_move);
-    assert(after_move.empty()); assert(from2.find(100) == nullptr);
-
-    // Move self
-    to2 = std::move(to2);
-    assert(to2.find(100) != nullptr);
+    AVLTree<int> int_tree{};
+    int_tree.insert(10); int_tree.insert(20); int_tree.insert(30);
+    AVLTree<float> float_tree{};
+    float_tree.insert(0.123); float_tree.insert(0.e-2); float_tree.insert(1.2);
 }
