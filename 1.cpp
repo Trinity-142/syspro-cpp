@@ -10,9 +10,9 @@ class AVLTree {
         int _value;
         int _height = 1;
 
-        Node(int value): value(value) {}
+        Node(int value): _value(value) {}
 
-        Node(const Node& other): value(other.value), height(other.height) {
+        Node(const Node& other): _value(other._value), _height(other._height) {
             if (other.left) left = new Node{*other.left};
             if (other.right) right = new Node{*other.right};
         }
@@ -117,18 +117,18 @@ class AVLTree {
     void calc_height(Node* node) {
         int left_height = height(node->left);
         int right_height = height(node->right);
-        node->height = std::max(left_height, right_height) + 1;
+        node->_height = std::max(left_height, right_height) + 1;
     }
 
     int height(Node* node) {
         if (!node) return 0;
-        return node->height;
+        return node->_height;
     }
 
     void _inorder(Node* node, vector<int>& result) {
         if (!node) return;
         _inorder(node->left, result);
-        result.push_back(node->value);
+        result.push_back(node->_value);
         _inorder(node->right, result);
     }
 
