@@ -4,7 +4,43 @@
 
 const double eps = 1e-5;
 
-struct Point {
+template <typename T, int N>
+struct Counter {
+    static int objects_alive;
+    bool counted = true;
+
+    Counter() {
+        check_limit();
+        ++objects_alive;
+    }
+
+    Counter(const Counter&) {
+        check_limit();
+        ++objects_alive;
+    }
+
+    Counter(Counter&& other)  noexcept {
+        this->counted = other.counted;
+        other.counted = false;
+    }
+
+protected:
+    ~Counter() {
+        if (counted) {
+            --objects_alive;
+        }
+    }
+private:
+    void check_limit() {
+        if (objects_alive >= N) {
+            throw std::logic_error("Maximum number of alive objects exceeded!");
+        }
+    }
+};
+
+template <typename T, int N> int Counter<T, N>::objects_alive(0);
+
+struct Point: Counter<Point, 4> {
     double x, y;
     Point(double x, double y): x(x), y(y) {}
 
@@ -14,7 +50,7 @@ public:
     }
 };
 
-class Line {
+class Line: Counter<Line, 3> {
     double a, b, c;
     Line(const Point& p1, const Point& p2) :
         a(p1.y - p2.y),
@@ -61,21 +97,13 @@ public:
 
 int main() {
     Point p1{42, 17}; Point p2{42, 17};
-    auto invalid_line = Line::fabric(p1, p2);
-    assert(!invalid_line.has_value());
-
-    auto opt_vertical = Line::fabric({2, 0}, {2, 10});
-    assert(opt_vertical.has_value());
-    Line vertical = opt_vertical.value();
-    Line horizontal(0, 1, -5);
-    auto inter = vertical.intersection(horizontal);
-    assert(inter.has_value());
-    assert(inter.value() == Point(2, 5));
-
-    auto opt_line = Line::fabric({5, 0}, {3.34, -2.34});
-    assert(opt_line.has_value());
-    Line line = opt_line.value();
+    std::cout << Counter<Point, 4>::objects_alive << "\n";
+    //Point p3{42, 2};
+    Line vertical = Line::fabric({2, 0}, {2, 10}).value();
+    Line line = Line::fabric({5, 0}, {3.34, -2.34}).value();
     Line perp = line.perpendicular({1, 1});
-    auto inter_perp = line.intersection(perp);
-    assert(inter_perp.has_value());
+    std::cout << Counter<Line, 3>::objects_alive << "\n";
+    Line abc = std::move(perp);
+    std::cout << Counter<Line, 3>::objects_alive << "\n";
+    //Line line2{1, 2 ,3};
 }
