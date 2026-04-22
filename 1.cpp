@@ -188,12 +188,63 @@ public:
         _delete(root);
         root = nullptr;
     }
+
+    class iterator {
+        vector<Node*> path;
+    public:
+        iterator(Node* root) {
+            go_left(root);
+        }
+
+        void go_left(Node* node) {
+            while (node) {
+                path.push_back(node);
+                node = node->left;
+            }
+        }
+
+        bool operator!=(const iterator& other) const {
+            if (path.empty() && other.path.empty()) return false;
+            if (path.empty() != other.path.empty()) return true;
+            return path.back() != other.path.back();
+        }
+
+        iterator& operator++() {
+            Node* leaf = path.back();
+            path.pop_back();
+            go_left(leaf->right);
+            return *this;
+        }
+
+        const T* operator->() {
+            return &path.back()->_value;
+        }
+
+        const T& operator*() {
+            return path.back()->_value;
+        }
+    };
+
+    iterator begin() {
+        return iterator(root);
+    }
+
+    iterator end() {
+        return iterator(nullptr);
+    }
 };
 
 int main() {
-    // Move constructor
     AVLTree<int> int_tree{};
-    int_tree.insert(10); int_tree.insert(20); int_tree.insert(30);
-    AVLTree<float> float_tree{};
-    float_tree.insert(0.123); float_tree.insert(0.e-2); float_tree.insert(1.2);
+    int_tree.insert(100); int_tree.insert(50); int_tree.insert(25); int_tree.insert(75); int_tree.insert(65);
+    int_tree.insert(85); int_tree.insert(150); int_tree.insert(125); int_tree.insert(175);
+    auto it = int_tree.begin();
+    auto end = int_tree.end();
+    for (; it != end; ++it) {
+        cout << *it << " ";
+    }
+    cout << endl;
+    for (auto&& i : int_tree) {
+        cout << i << " ";
+    }
 }
