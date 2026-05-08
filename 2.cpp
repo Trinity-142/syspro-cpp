@@ -12,6 +12,11 @@ public:
     friend bool operator==(const Point& p1, const Point& p2) {
         return std::abs(p1.x - p2.x) < eps && std::abs(p1.y - p2.y) < eps;
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const Point& point) {
+        os << "(" << point.x << ", " << point.y << ")";
+        return os;
+    }
 };
 
 class Line {
@@ -58,7 +63,7 @@ public:
     }
 };
 
-
+/*
 int main() {
     Point p1{42, 17}; Point p2{42, 17};
     auto invalid_line = Line::fabric(p1, p2);
@@ -79,3 +84,4 @@ int main() {
     auto inter_perp = line.intersection(perp);
     assert(inter_perp.has_value());
 }
+*/

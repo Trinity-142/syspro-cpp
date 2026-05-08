@@ -4,7 +4,7 @@
 #include <type_traits>
 
 template<size_t SIZE, typename... Types>
-concept EnoughMemory = (sizeof(Types) + ...) <= SIZE;
+concept EnoughMemory = (sizeof(Types) + ... + 0) <= SIZE;
 
 template<typename... Types>
 concept AllCopyConstructable = (std::is_copy_constructible_v<Types> && ...);
@@ -19,7 +19,7 @@ void allocate(void* memory, Types... args) {
     };
     (copy(args), ...);
 }
-
+/*
 int main() {
     constexpr size_t SIZE = 17;
     char static_arr[SIZE];
@@ -36,3 +36,4 @@ int main() {
     const char* val4 = *reinterpret_cast<const char**>(static_arr + sizeof(int) * 2 + sizeof(char));
     assert(std::strcmp(val4, "hi") == 0);
 }
+*/
