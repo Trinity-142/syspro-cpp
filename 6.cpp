@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <span>
 using namespace std;
 
 template <typename T>
@@ -16,7 +17,7 @@ public:
     }
 
     SquareMatrix& operator+=(const SquareMatrix& other) {
-        assert(_size == other._size);
+        if (_size != other._size) throw invalid_argument("Incompatible matrix dimensions");
         for (size_t i = 0; i < _size; i++) {
             for (size_t j = 0; j < _size; j++) {
                 (*this)[i][j] += other[i][j];
@@ -34,7 +35,7 @@ public:
     }
 
     SquareMatrix operator+(const SquareMatrix& other) const {
-        assert(_size == other._size);
+        if (_size != other._size) throw invalid_argument("Incompatible matrix dimensions");
         SquareMatrix result(*this);
         result += other;
         return result;
@@ -46,7 +47,7 @@ public:
     }
 
     SquareMatrix& operator*=(const SquareMatrix& other) {
-        assert(_size == other._size);
+        if (_size != other._size) throw invalid_argument("Incompatible matrix dimensions");
         SquareMatrix result(_size);
         for (size_t i = 0; i < _size; i++) {
             for (size_t j = 0; j < _size; j++) {
@@ -68,7 +69,7 @@ public:
     }
 
     SquareMatrix operator*(const SquareMatrix& other) const {
-        assert(_size == other._size);
+        if (_size != other._size) throw invalid_argument("Incompatible matrix dimensions");
         SquareMatrix result(*this);
         result *= other;
         return result;
@@ -87,11 +88,13 @@ public:
         return !(*this == other);
     }
 
-    T* operator[](size_t i) {
-        return &_data[i * _size];
+    std::span<T> operator[](size_t i) {
+        if (i >= _size) throw out_of_range("Row index out of range");
+        return std::span<T>(&_data[i * _size], _size);
     }
-    const T* operator[](size_t i) const {
-        return &_data[i * _size];
+    std::span<const T> operator[](size_t i) const {
+        if (i >= _size) throw out_of_range("Row index out of range");
+        return std::span<const T>(&_data[i * _size], _size);
     }
 
     explicit operator double() const {
