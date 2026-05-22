@@ -7,7 +7,7 @@ namespace Emulator {
     Reg src;
 
     public:
-        Store(int dst, Reg src);
+        Store(Reg src, int dst);
         void eval(EmulatorState& emul) override;
     };
 }

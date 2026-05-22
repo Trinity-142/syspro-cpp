@@ -25,7 +25,7 @@ namespace Emulator {
         virtual ~Instruction() = default;
     };
 
-    Reg strtoreg(const std::string& str);
+    std::optional<Reg> strtoreg(const std::string& str);
     std::vector<Instruction*> parse(const std::string& program);
     int emulate(const std::string& program_text);
 }

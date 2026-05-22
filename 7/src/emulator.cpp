@@ -36,12 +36,30 @@ std::optional<std::string> readStringFromFile(const std::string& filename) {
 }
 
 namespace Emulator {
-    Reg strtoreg(const std::string& str) {
+    std::optional<Reg> strtoreg(const std::string& str) {
         if (str == "R0") return R0;
         if (str == "R1") return R1;
         if (str == "R2") return R2;
         if (str == "R3") return R3;
-        throw std::invalid_argument("invalid register");
+        return std::nullopt;
+    }
+
+    template <typename OpClass>
+    void parseTwoOperandInstruction(std::vector<std::string>& words, std::vector<Instruction*>& instructions) {
+        auto dst = strtoreg(words[1]);
+        if (!dst.has_value()) {
+            throw std::invalid_argument("Invalid destination register");
+        }
+        if (auto src = strtoreg(words[2]); src.has_value()) {
+            instructions.push_back(new OpClass(dst.value(), src.value()));
+        } else {
+            try {
+                int imm = stoi(words[2]);
+                instructions.push_back(new OpClass(dst.value(), imm));
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Invalid immediate: " << words[2] << std::endl;
+            }
+        }
     }
 
     std::vector<Instruction*> parse(const std::string& program) {
@@ -55,62 +73,26 @@ namespace Emulator {
             if (words.empty()) continue;
 
             const std::string& op = words[0];
-            if (op == "Mov") {
-                Reg dst = strtoreg(words[1]);
-                try {
-                    Reg src = strtoreg(words[2]);
-                    instructions.push_back(new Mov(dst, src));
-                } catch (const std::invalid_argument& e) {
-                    instructions.push_back(new Mov(dst, std::stoi(words[2])));
-                }
-            }
-            else if (op == "Add") {
-                Reg dst = strtoreg(words[1]);
-                try {
-                    Reg src = strtoreg(words[2]);
-                    instructions.push_back(new Add(dst, src));
-                } catch (const std::invalid_argument& e) {
-                    instructions.push_back(new Add(dst, std::stoi(words[2])));
-                }
-            }
-            else if (op == "Sub") {
-                Reg dst = strtoreg(words[1]);
-                try {
-                    Reg src = strtoreg(words[2]);
-                    instructions.push_back(new Sub(dst, src));
-                } catch (const std::invalid_argument& e) {
-                    instructions.push_back(new Sub(dst, std::stoi(words[2])));
-                }
-            }
-            else if (op == "Mul") {
-                Reg dst = strtoreg(words[1]);
-                try {
-                    Reg src = strtoreg(words[2]);
-                    instructions.push_back(new Mul(dst, src));
-                } catch (const std::invalid_argument& e) {
-                    instructions.push_back(new Mul(dst, std::stoi(words[2])));
-                }
-            }
-            else if (op == "Div") {
-                Reg dst = strtoreg(words[1]);
-                try {
-                    Reg src = strtoreg(words[2]);
-                    instructions.push_back(new Div(dst, src));
-                } catch (const std::invalid_argument& e) {
-                    instructions.push_back(new Div(dst, std::stoi(words[2])));
-                }
-            }
-            else if (op == "Load") {
-                instructions.push_back(new Load(strtoreg(words[1]), std::stoi(words[2])));
-            }
-            else if (op == "Store") {
-                instructions.push_back(new Store(std::stoi(words[2]), strtoreg(words[1])));
-            }
+            if (op == "Mov") parseTwoOperandInstruction<Mov>(words, instructions);
+            else if (op == "Add") parseTwoOperandInstruction<Add>(words, instructions);
+            else if (op == "Sub") parseTwoOperandInstruction<Sub>(words, instructions);
+            else if (op == "Mul") parseTwoOperandInstruction<Mul>(words, instructions);
+            else if (op == "Div") parseTwoOperandInstruction<Div>(words, instructions);
+            else if (op == "Load") parseTwoOperandInstruction<Load>(words, instructions);
+            else if (op == "Store") parseTwoOperandInstruction<Store>(words, instructions);
             else if (op == "Jmp") {
-                instructions.push_back(new Jmp(std::stoi(words[1])));
+                try {
+                    instructions.push_back(new Jmp(std::stoi(words[1])));
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Invalid immediate: " << words[1] << std::endl;
+                }
             }
             else if (op == "Jmpz") {
-                instructions.push_back(new Jmpz(std::stoi(words[1])));
+                try {
+                    instructions.push_back(new Jmpz(std::stoi(words[1])));
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Invalid immediate: " << words[1] << std::endl;
+                }
             }
         }
         return instructions;
@@ -122,7 +104,7 @@ namespace Emulator {
 
         while (state._pc < program.size()) {
             size_t current_pc = state._pc;
-            program[state._pc]->eval(state);
+            program[current_pc]->eval(state);
             if (state._pc == current_pc) {
                 state._pc++;
             }
