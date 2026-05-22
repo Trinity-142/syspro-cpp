@@ -43,8 +43,7 @@ struct Writer: virtual IO {
 
     size_t write(const std::string& str) {
         if (!opened) return 0;
-        writeBytes(&str[0], str.size());
-        return str.size();
+        return writeBytes(&str[0], str.size());
     }
 };
 
